@@ -1,0 +1,32 @@
+name: Excalipoor
+version: 0.0.1
+main: com.github.ucchyocean.excalipoor.Excalipoor
+description: エクスカリパーとは、最強の攻撃力を誇る伝説の剣（のパチモン）である。
+author: ucchy
+
+commands:
+  excalipoor:
+    description: エクスカリパーを授けるコマンド
+    aliases: [exc]
+    usage: |
+           /<command> get [amount] - エクスカリパーを汝が受け取るのだッッ！
+           /<command> give (player) [amount] - エクスカリパーを汝が授けるのだッッ！
+    permission: excalipoor.command
+    permission-message: 汝には未だ、エクスカリパーを扱う資格が無いようだ･･･
+
+permissions:
+  excalipoor.get:
+    description: 汝にエクスカリパーを光臨させる権限を与えるッッ！
+    default: op
+  excalipoor.give:
+    description: 汝にエクスカリパーを授ける権限を与えるッッ！
+    default: op
+  excalipoor.command:
+    description: 汝にエクスカリパーを光臨させる呪文の詠唱権限を与えるッッ！
+    default: op
+  excalipoor.*:
+    description: 汝にエクスカリパーを操る全ての権限を授けようッ！
+    children:
+      excalipoor.get: true
+      excalipoor.give: true
+      excalipoor.command: true
