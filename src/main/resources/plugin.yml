@@ -9,8 +9,8 @@ commands:
     description: エクスカリパーを授けるコマンド
     aliases: [exc]
     usage: |
-           /<command> get [amount] - エクスカリパーを汝が受け取るのだッッ！
-           /<command> give (player) [amount] - エクスカリパーを汝が授けるのだッッ！
+           /<command> get (item) [amount] - エクスカリパーを汝が受け取るのだッッ！
+           /<command> give (item) (player) [amount] - エクスカリパーを汝が授けるのだッッ！
     permission: excalipoor.command
     permission-message: 汝には未だ、エクスカリパーを扱う資格が無いようだ･･･
 

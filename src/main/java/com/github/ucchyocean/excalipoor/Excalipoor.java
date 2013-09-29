@@ -5,20 +5,19 @@
  */
 package com.github.ucchyocean.excalipoor;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.enchantments.Enchantment;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -27,13 +26,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 public class Excalipoor extends JavaPlugin implements Listener {
 
-    private static final String DISPLAY_NAME = "Excalipoor";
-    
-    private int amount;
-    private ItemStack item;
-    private ArrayList<Enchantment> enchants;
-    private ArrayList<Integer> enchantLevels;
-    private short durability;
+    private HashMap<String, ItemSetting> items;
     
     /**
      * プラグインが有効化されたときに呼び出されるイベント
@@ -48,46 +41,16 @@ public class Excalipoor extends JavaPlugin implements Listener {
         // コンフィグが無い場合に作成する
         saveDefaultConfig();
         
-        // スタック量
-        amount = getConfig().getInt("amount", 5);
-        
-        // アイテムの種類
-        String item_str = getConfig().getString("item", "DIAMOND_SWORD");
-        if ( Material.getMaterial(item_str) != null ) {
-            item = new ItemStack(Material.getMaterial(item_str), amount);
-        } else {
-            item = new ItemStack(Material.DIAMOND_SWORD, amount);
-        }
-        
-        // エンチャント
-        enchants = new ArrayList<Enchantment>();
-        enchantLevels = new ArrayList<Integer>();
-        if ( getConfig().contains("enchants") ) {
-            ConfigurationSection enchants_sec = getConfig().getConfigurationSection("enchants");
-            for ( String type_str : enchants_sec.getKeys(false) ) {
-                Enchantment enchant = Enchantment.getByName(type_str);
-                
-                if ( enchant != null ) {
-                    int level = enchants_sec.getInt(type_str, 1);
-                    item.addUnsafeEnchantment(enchant, level);
-                    enchants.add(enchant);
-                    enchantLevels.add(level);
-                }
+        // コンフィグからアイテムをロード
+        items = new HashMap<String, ItemSetting>();
+        FileConfiguration config = getConfig();
+        for ( String name : config.getKeys(false) ) {
+            ConfigurationSection section = config.getConfigurationSection(name);
+            ItemSetting is = ItemSetting.load(name, section);
+            if ( is != null ) {
+                items.put(name, is);
             }
         }
-        
-        // 残消耗度
-        short remain = (short)getConfig().getInt("remain", 1);
-        durability = (short)(item.getType().getMaxDurability() - remain + 1);
-        if ( durability < 0 ) {
-            durability = 0;
-        }
-        item.setDurability(durability);
-        
-        // 表示名設定
-        ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(DISPLAY_NAME);
-        item.setItemMeta(meta);
     }
 
     /**
@@ -98,16 +61,27 @@ public class Excalipoor extends JavaPlugin implements Listener {
     public boolean onCommand(CommandSender sender, Command command,
             String label, String[] args) {
         
-        if ( args.length >= 1 && args[0].equalsIgnoreCase("get") ) {
+        if ( args.length >= 2 && args[0].equalsIgnoreCase("get") ) {
             
             if ( !(sender instanceof Player) ) {
                 sender.sendMessage("This command can be run only in game.");
                 return true;
             }
             
-            ItemStack excalipoor = item.clone();
-            if ( args.length >= 2 && args[1].matches("-?[0-9]+") ) {
-                int amount = Integer.parseInt(args[1]);
+            if ( !sender.hasPermission("excalipoor.get") ) {
+                sender.sendMessage("You don't have permission \"excalipoor.get\".");
+                return true;
+            }
+            
+            String name = args[1];
+            if ( !items.containsKey(name) ) {
+                sender.sendMessage("Item " + name + " is not exist.");
+                return true;
+            }
+            
+            ItemStack excalipoor = items.get(name).getItem();
+            if ( args.length >= 3 && args[2].matches("-?[0-9]+") ) {
+                int amount = Integer.parseInt(args[2]);
                 excalipoor.setAmount(amount);
             }
             Player player = (Player)sender;
@@ -121,15 +95,26 @@ public class Excalipoor extends JavaPlugin implements Listener {
             
         } else if ( args.length >= 2 && args[0].equalsIgnoreCase("give") ) {
             
-            Player target = getServer().getPlayerExact(args[1]);
+            Player target = getServer().getPlayerExact(args[2]);
             if ( target == null ) {
-                sender.sendMessage("Player " + args[1] + " was not found.");
+                sender.sendMessage("Player " + args[2] + " was not found.");
                 return true;
             }
             
-            ItemStack excalipoor = item.clone();
-            if ( args.length >= 3 && args[2].matches("-?[0-9]+") ) {
-                int amount = Integer.parseInt(args[2]);
+            if ( !sender.hasPermission("excalipoor.give") ) {
+                sender.sendMessage("You don't have permission \"excalipoor.give\".");
+                return true;
+            }
+            
+            String name = args[1];
+            if ( !items.containsKey(name) ) {
+                sender.sendMessage("Item " + name + " is not exist.");
+                return true;
+            }
+            
+            ItemStack excalipoor = items.get(name).getItem();
+            if ( args.length >= 4 && args[3].matches("-?[0-9]+") ) {
+                int amount = Integer.parseInt(args[3]);
                 excalipoor.setAmount(amount);
             }
 
@@ -153,23 +138,23 @@ public class Excalipoor extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         
-        // 左クリックでなければ無視する。
-        if ( event.getAction() != Action.LEFT_CLICK_AIR && 
-                event.getAction() != Action.LEFT_CLICK_BLOCK ) {
+        // クリックでなければ無視する。
+        if ( event.getAction() == Action.PHYSICAL ) {
             return;
         }
         
-        // 手に持っているアイテムがExcalipoorでないなら無視する
+        // 手に持っているアイテムが関連アイテムでないなら無視する
         Player player = event.getPlayer();
         ItemStack item = player.getItemInHand();
         
         if ( item == null || item.getItemMeta() == null ||
                 !item.getItemMeta().hasDisplayName() ||
-                !item.getItemMeta().getDisplayName().equals(DISPLAY_NAME) ) {
+                !items.containsKey(item.getItemMeta().getDisplayName()) ) {
             return;
         }
         
-        // Durabilityが0なら、消耗値を再設定する
+        // Durabilityが設定値より小さいなら、消耗値を再設定する
+        short durability = items.get(item.getItemMeta().getDisplayName()).getdurability();
         if ( item.getDurability() < durability ) {
             item.setDurability(durability);
         }

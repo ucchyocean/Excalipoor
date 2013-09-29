@@ -1,22 +1,24 @@
-# Excalipoor v0.0.1
+# Excalipoor v0.0.2
 # @author     ucchy
 # @license    LGPLv3
 # @copyright  Copyright ucchy 2013
 
-# Default stack amount.
-amount: 10
+excalipoor:
+  amount: 10
+  item: DIAMOND_SWORD
+  enchants:
+    DAMAGE_ALL: 5
+    FIRE_ASPECT: 5
+    LOOT_BONUS_MOBS: 5
+  remain: 1
 
-# Item type.
-item: DIAMOND_SWORD
-
-# Enchantments type and level.
-enchants:
-  DAMAGE_ALL: 5
-  FIRE_ASPECT: 5
-  LOOT_BONUS_MOBS: 5
-
-# Remain amount of durability
-remain: 1
+crosspow:
+  amount: 5
+  item: BOW
+  enchants:
+    ARROW_KNOCKBACK: 10
+    ARROW_DAMAGE: 2
+  remain: 1
 
 # -- MEMO --
 # All of Enchantment types.
