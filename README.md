@@ -8,8 +8,8 @@ Excalipoor
 
 <p>
 <h2>コマンド</h2>
-/exc get [amount] - エクスカリパーを汝が受け取るのだッッ！<br />
-/exc give (player) [amount] - エクスカリパーを汝が授けるのだッッ！<br />
+/exc get (item) [amount] - エクスカリパーを汝が受け取るのだッッ！<br />
+/exc give (item) (player) [amount] - エクスカリパーを汝が授けるのだッッ！<br />
 </p>
 
 <p>
